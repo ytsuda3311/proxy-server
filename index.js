@@ -3,6 +3,7 @@ const app = express();
 const { createProxyMiddleware } = require("http-proxy-middleware");
 const rateLimit = require("express-rate-limit");
 require("dotenv").config();
+const url = require("url");
 
 const limiter = rateLimit({
   // 「windowMs」= アクセス数の制限を設ける時間幅。以下はミリ秒表記で15分
@@ -20,6 +21,18 @@ const limiter = rateLimit({
 // 「res」= ブラウザに返すレスポンス
 app.get("/", (req, res) => {
   res.send("This is my proxy server");
+});
+
+app.use("/weather-data", (req, res, next) => {
+  // URL末尾に${city}があるので、パラメーターを取得する
+  const city = new URL(req.url).query;
+  createProxyMiddleware({
+    target: `${process.env.BASE_API_URL_WEATHERAPI}${city}&aqi=no`,
+    changeOrigin: true,
+    pathRewrite: {
+      [`^"/weather-data`]: "",
+    },
+  })(req, res, next);
 });
 
 // 個別のURLにのみ適用する時には以下のように書く
