@@ -3,7 +3,6 @@ const app = express();
 const { createProxyMiddleware } = require("http-proxy-middleware");
 const rateLimit = require("express-rate-limit");
 require("dotenv").config();
-const url = require("url");
 
 const limiter = rateLimit({
   // 「windowMs」= アクセス数の制限を設ける時間幅。以下はミリ秒表記で15分
@@ -45,6 +44,17 @@ app.use("/corona-tracker-world-data", limiter, (req, res, next) => {
     // 「pathRewite」= app.use()で設定しているURLをtargetのURLに追加したり、置き換えたりするときに使う
     pathRewrite: {
       [`^/corona-tracker-world-data`]: "",
+    },
+  })(req, res, next);
+});
+
+app.use("/corona-tracker-country-data", (req, res, next) => {
+  const country = new URL(req.url).query;
+  createProxyMiddleware({
+    target: `process.env.BASE_API_URL_CORONA_COUNTRY/${country}`,
+    changeOrigin: true,
+    pathRewrite: {
+      [`^/corona-tracker-country-data`]: "",
     },
   })(req, res, next);
 });
